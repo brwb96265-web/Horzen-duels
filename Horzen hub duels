@@ -1,0 +1,123 @@
+-- Horzen Duels Hub UI
+
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+gui.Name = "HorzenDuelsHub"
+
+-- Main Frame
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 400, 0, 300)
+main.Position = UDim2.new(0.5, -200, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(15,15,15)
+main.BorderSizePixel = 0
+
+-- Title
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "HORZEN DUELS"
+title.TextColor3 = Color3.fromRGB(255,255,255)
+title.BackgroundColor3 = Color3.fromRGB(25,25,25)
+title.TextScaled = true
+
+-- Tabs Frame
+local tabs = Instance.new("Frame", main)
+tabs.Size = UDim2.new(0,100,1,-40)
+tabs.Position = UDim2.new(0,0,0,40)
+tabs.BackgroundColor3 = Color3.fromRGB(20,20,20)
+
+-- Content Frame
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1,-100,1,-40)
+content.Position = UDim2.new(0,100,0,40)
+content.BackgroundColor3 = Color3.fromRGB(30,30,30)
+
+-- Tabs
+local function createTab(name, posY)
+    local btn = Instance.new("TextButton", tabs)
+    btn.Size = UDim2.new(1,0,0,40)
+    btn.Position = UDim2.new(0,0,0,posY)
+    btn.Text = name
+    btn.BackgroundColor3 = Color3.fromRGB(35,35,35)
+    btn.TextColor3 = Color3.new(1,1,1)
+    
+    btn.MouseButton1Click:Connect(function()
+        for _,v in pairs(content:GetChildren()) do
+            v.Visible = false
+        end
+        content[name].Visible = true
+    end)
+end
+
+-- Create Tabs
+createTab("Movement",0)
+createTab("Combat",40)
+createTab("Settings",80)
+
+-- Pages
+local function createPage(name)
+    local frame = Instance.new("Frame", content)
+    frame.Name = name
+    frame.Size = UDim2.new(1,0,1,0)
+    frame.Visible = false
+    frame.BackgroundTransparency = 1
+    return frame
+end
+
+local movementPage = createPage("Movement")
+local combatPage = createPage("Combat")
+local settingsPage = createPage("Settings")
+
+movementPage.Visible = true
+
+-- Toggle Function
+local function createToggle(parent, text, posY)
+    local toggle = Instance.new("TextButton", parent)
+    toggle.Size = UDim2.new(0,200,0,40)
+    toggle.Position = UDim2.new(0,20,0,posY)
+    toggle.Text = text .. ": OFF"
+    toggle.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    toggle.TextColor3 = Color3.new(1,1,1)
+
+    local state = false
+    toggle.MouseButton1Click:Connect(function()
+        state = not state
+        toggle.Text = text .. ": " .. (state and "ON" or "OFF")
+    end)
+end
+
+-- Slider Function (Simple)
+local function createSlider(parent, text, posY)
+    local label = Instance.new("TextLabel", parent)
+    label.Size = UDim2.new(0,200,0,20)
+    label.Position = UDim2.new(0,20,0,posY)
+    label.Text = text .. ": 0"
+    label.TextColor3 = Color3.new(1,1,1)
+    label.BackgroundTransparency = 1
+
+    local slider = Instance.new("TextButton", parent)
+    slider.Size = UDim2.new(0,200,0,20)
+    slider.Position = UDim2.new(0,20,0,posY+25)
+    slider.BackgroundColor3 = Color3.fromRGB(80,80,80)
+    slider.Text = ""
+
+    slider.MouseButton1Click:Connect(function()
+        local value = math.random(1,100)
+        label.Text = text .. ": " .. value
+    end)
+end
+
+-- Movement Features
+createToggle(movementPage, "Speed Boost", 20)
+createToggle(movementPage, "Anti Ragdoll", 70)
+createToggle(movementPage, "Hover", 120)
+createSlider(movementPage, "Speed", 170)
+
+-- Combat Features
+createToggle(combatPage, "Auto Hit", 20)
+createToggle(combatPage, "Spin Bot", 70)
+
+-- Settings
+createToggle(settingsPage, "FPS Boost", 20)
+
+print("Horzen Duels Hub Loaded!")

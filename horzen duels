@@ -1,0 +1,138 @@
+-- Horzen Duels (Floating Logo + Full GUI)
+
+local player = game.Players.LocalPlayer
+
+-- GUI 
+local ScreenGui = Instance.new("ScreenGui", game.CoreGui)
+ScreenGui.Name = "HorzenDuels"
+
+
+local ImageButton = Instance.new("ImageButton", ScreenGui)
+ImageButton.Size = UDim2.new(0,60,0,60)
+ImageButton.Position = UDim2.new(0,20,0,80)
+ImageButton.Image = "https://cdn.discordapp.com/attachments/1485612784396931217/1488620563420418068/file_00000000ace07243bcc7d15140d2aac6.png?ex=69cd716f&is=69cc1fef&hm=13c23168a17db6f3d0a95ce270c36fbb72553a4cd24594cd15c963d36340d864&" -- حط هنا ID الصورة اذا رفعتها
+ImageButton.BackgroundTransparency = 1
+
+
+local Frame = Instance.new("Frame", ScreenGui)
+Frame.Size = UDim2.new(0,260,0,340)
+Frame.Position = UDim2.new(0,20,0,150)
+Frame.BackgroundColor3 = Color3.fromRGB(20,20,20)
+Frame.Visible = false
+
+
+local Title = Instance.new("TextLabel", Frame)
+Title.Size = UDim2.new(1,0,0,40)
+Title.Text = "Horzen Duels"
+Title.TextColor3 = Color3.new(1,1,1)
+Title.BackgroundTransparency = 1
+Title.TextScaled = true
+
+
+ImageButton.MouseButton1Click:Connect(function()
+    Frame.Visible = not Frame.Visible
+end)
+
+
+local function createButton(text, x, y)
+    local btn = Instance.new("TextButton", Frame)
+    btn.Size = UDim2.new(0,100,0,50)
+    btn.Position = UDim2.new(0,x,0,y)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    btn.TextColor3 = Color3.new(1,1,1)
+    return btn
+end
+
+-- 
+local autoL = createButton("Auto L", 20, 60)
+local autoR = createButton("Auto R", 140, 60)
+local hoverBtn = createButton("Hover", 20, 120)
+local antiBtn = createButton("Anti Ragdoll", 140, 120)
+local autoToRagdollBtn = createButton("Auto To Ragdoll", 60, 190)
+
+-- 
+local left = false
+local right = false
+local hover = false
+local anti = false
+local autoToRagdoll = false
+
+-- 
+autoL.MouseButton1Click:Connect(function()
+    left = not left
+    autoL.Text = "Auto L: "..(left and "ON" or "OFF")
+end)
+
+autoR.MouseButton1Click:Connect(function()
+    right = not right
+    autoR.Text = "Auto R: "..(right and "ON" or "OFF")
+end)
+
+hoverBtn.MouseButton1Click:Connect(function()
+    hover = not hover
+    hoverBtn.Text = "Hover: "..(hover and "ON" or "OFF")
+end)
+
+antiBtn.MouseButton1Click:Connect(function()
+    anti = not anti
+    antiBtn.Text = "Anti Ragdoll: "..(anti and "ON" or "OFF")
+end)
+
+autoToRagdollBtn.MouseButton1Click:Connect(function()
+    autoToRagdoll = not autoToRagdoll
+    autoToRagdollBtn.Text = "Auto To Ragdoll: "..(autoToRagdoll and "ON" or "OFF")
+end)
+
+-- 
+local function getClosestPlayer()
+    local closest = nil
+    local dist = math.huge
+    
+    for _,v in pairs(game.Players:GetPlayers()) do
+        if v ~= player and v.Character and v.Character:FindFirstChild("HumanoidRootPart") then
+            local d = (v.Character.HumanoidRootPart.Position - player.Character.HumanoidRootPart.Position).Magnitude
+            if d < dist then
+                dist = d
+                closest = v
+            end
+        end
+    end
+    return closest
+end
+
+-- 
+game:GetService("RunService").RenderStepped:Connect(function()
+    local char = player.Character
+    if not char or not char:FindFirstChild("Humanoid") then return end
+    
+    local hum = char.Humanoid
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+
+    -- Anti Ragdoll
+    if anti then
+        hum.PlatformStand = false
+        hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+    end
+
+    -- Hover
+    if hover then
+        char:TranslateBy(Vector3.new(0,0.2,0))
+    end
+
+    -- Auto 
+    if left then
+        hum:Move(Vector3.new(-1,0,0), true)
+    elseif right then
+        hum:Move(Vector3.new(1,0,0), true)
+    end
+
+    -- Auto To Ragdoll
+    if autoToRagdoll and hum:GetState() == Enum.HumanoidStateType.FallingDown then
+        local enemy = getClosestPlayer()
+        if enemy and enemy.Character and enemy.Character:FindFirstChild("HumanoidRootPart") then
+            root.CFrame = enemy.Character.HumanoidRootPart.CFrame * CFrame.new(0,0,-2)
+        end
+    end
+end)

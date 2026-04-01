@@ -1,0 +1,147 @@
+-- Horzen Duels V2 (Advanced Hub)
+
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.Name = "HorzenDuelsV2"
+
+-- MAIN (Draggable)
+local main = Instance.new("Frame", gui)
+main.Size = UDim2.new(0, 420, 0, 300)
+main.Position = UDim2.new(0.5, -210, 0.5, -150)
+main.BackgroundColor3 = Color3.fromRGB(20,20,20)
+main.Active = true
+main.Draggable = true
+
+-- TITLE
+local title = Instance.new("TextLabel", main)
+title.Size = UDim2.new(1,0,0,40)
+title.Text = "HORZEN DUELS V2"
+title.BackgroundColor3 = Color3.fromRGB(30,30,30)
+title.TextColor3 = Color3.new(1,1,1)
+title.TextScaled = true
+
+-- CONTENT
+local content = Instance.new("Frame", main)
+content.Size = UDim2.new(1,0,1,-40)
+content.Position = UDim2.new(0,0,0,40)
+content.BackgroundTransparency = 1
+
+-- SETTINGS
+local settings = {
+    speed = 16,
+    speedOn = false
+}
+
+-- FUNCTIONS
+local function getHum()
+    local char = player.Character or player.CharacterAdded:Wait()
+    return char:FindFirstChildOfClass("Humanoid")
+end
+
+-- SPEED
+local function applySpeed()
+    local hum = getHum()
+    if hum then
+        hum.WalkSpeed = settings.speedOn and settings.speed or 16
+    end
+end
+
+-- HOVER
+local hovering = false
+local hoverForce
+
+local function toggleHover()
+    hovering = not hovering
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    if hovering then
+        hoverForce = Instance.new("BodyVelocity", hrp)
+        hoverForce.Velocity = Vector3.new(0,7,0)
+        hoverForce.MaxForce = Vector3.new(0,math.huge,0)
+    else
+        if hoverForce then hoverForce:Destroy() end
+    end
+end
+
+-- SPIN
+local spinning = false
+local function toggleSpin()
+    spinning = not spinning
+    local char = player.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+
+    task.spawn(function()
+        while spinning and hrp do
+            hrp.CFrame = hrp.CFrame * CFrame.Angles(0, math.rad(20), 0)
+            task.wait()
+        end
+    end)
+end
+
+-- UI BUTTON
+local function createBtn(text, y, callback)
+    local b = Instance.new("TextButton", content)
+    b.Size = UDim2.new(0,200,0,40)
+    b.Position = UDim2.new(0,20,0,y)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(50,50,50)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.MouseButton1Click:Connect(callback)
+    return b
+end
+
+-- BUTTONS
+local speedBtn = createBtn("Speed: OFF", 20, function()
+    settings.speedOn = not settings.speedOn
+    speedBtn.Text = "Speed: "..(settings.speedOn and "ON" or "OFF")
+    applySpeed()
+end)
+
+createBtn("Speed +10", 70, function()
+    settings.speed = settings.speed + 10
+    applySpeed()
+end)
+
+local hoverBtn = createBtn("Hover: OFF", 120, function()
+    toggleHover()
+    hoverBtn.Text = "Hover: "..(hovering and "ON" or "OFF")
+end)
+
+local spinBtn = createBtn("Spin: OFF", 170, function()
+    toggleSpin()
+    spinBtn.Text = "Spin: "..(spinning and "ON" or "OFF")
+end)
+
+createBtn("Reset", 220, function()
+    player.Character:BreakJoints()
+end)
+
+-- SIDE BUTTONS
+local side = Instance.new("Frame", gui)
+side.Size = UDim2.new(0,60,0,200)
+side.Position = UDim2.new(1,-70,0.5,-100)
+side.BackgroundTransparency = 1
+
+local function sideBtn(text, y, callback)
+    local b = Instance.new("TextButton", side)
+    b.Size = UDim2.new(0,50,0,50)
+    b.Position = UDim2.new(0,0,0,y)
+    b.Text = text
+    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.MouseButton1Click:Connect(callback)
+end
+
+sideBtn("H", 0, toggleHover)
+sideBtn("S", 60, function()
+    settings.speedOn = not settings.speedOn
+    applySpeed()
+end)
+sideBtn("R", 120, function()
+    player.Character:BreakJoints()
+end)
+
+print("Horzen Duels V2 Loaded")

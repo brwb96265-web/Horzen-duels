@@ -1,0 +1,102 @@
+-- Horzen Duels Safe Version
+
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RS = game:GetService("RunService")
+
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local hum = char:WaitForChild("Humanoid")
+
+-- GUI
+local gui = Instance.new("ScreenGui")
+gui.Name = "HorzenDuelsUI"
+gui.Parent = player:WaitForChild("PlayerGui")
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,240,0,280)
+frame.Position = UDim2.new(0.05,0,0.3,0)
+frame.BackgroundColor3 = Color3.fromRGB(25,25,25)
+
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.Text = "Horzen Duels"
+title.TextColor3 = Color3.new(1,1,1)
+title.BackgroundColor3 = Color3.fromRGB(0,0,0)
+
+-- Toggles
+local dashEnabled = false
+local autoGrab = false
+local strafeDir = 0
+local grabCooldown = 0
+
+-- Button function
+local function createButton(text, posY, func)
+    local btn = Instance.new("TextButton", frame)
+    btn.Size = UDim2.new(1,-10,0,36)
+    btn.Position = UDim2.new(0,5,0,posY)
+    btn.Text = text
+    btn.BackgroundColor3 = Color3.fromRGB(45,45,45)
+    btn.TextColor3 = Color3.new(1,1,1)
+    btn.MouseButton1Click:Connect(func)
+end
+
+-- Buttons
+createButton("Toggle Dash (E)", 40, function() dashEnabled = not dashEnabled end)
+createButton("Auto Grab (Safe)", 80, function() autoGrab = not autoGrab end)
+createButton("Strafe Left", 120, function() strafeDir = -1 end)
+createButton("Strafe Right", 160, function() strafeDir = 1 end)
+createButton("Stop Strafe", 200, function() strafeDir = 0 end)
+createButton("Anti Stuck", 240, function()
+    if hrp then
+        hrp.Velocity = Vector3.new(0,50,0)
+    end
+end)
+
+-- Show/Hide UI
+local visible = true
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.RightControl then
+        visible = not visible
+        frame.Visible = visible
+    end
+end)
+
+-- Dash input
+UIS.InputBegan:Connect(function(input, gp)
+    if gp then return end
+    if dashEnabled and input.KeyCode == Enum.KeyCode.E then
+        hrp.Velocity = hrp.CFrame.LookVector * 90
+    end
+end)
+
+-- Main loop
+RS.RenderStepped:Connect(function(dt)
+    if not hrp or not hum then return end
+
+    -- Strafe
+    if strafeDir ~= 0 then
+        hum:Move(Vector3.new(strafeDir,0,0), true)
+    end
+
+    -- Auto Grab
+    grabCooldown = math.max(0, grabCooldown - dt)
+    if autoGrab and grabCooldown == 0 then
+        local closest, dist = nil, 18
+        for _,v in ipairs(workspace:GetChildren()) do
+            if v:IsA("Model") and v ~= char and v:FindFirstChild("HumanoidRootPart") then
+                local d = (hrp.Position - v.HumanoidRootPart.Position).Magnitude
+                if d < dist then
+                    dist = d
+                    closest = v
+                end
+            end
+        end
+        if closest then
+            hum:MoveTo(closest.HumanoidRootPart.Position)
+            grabCooldown = 1.2
+        end
+    end
+end)

@@ -1,0 +1,156 @@
+--[[
+    HORZEN HUB V43 - CLEAN EDITION
+    - UI: NEO-BLACK & READY INDICATOR (REPLICA)
+    - FEATURES: AUTO L/R, HYPER GRAB, ANTI-RAGDOLL, AUTO BAT
+    - STATUS: NO ARABIC TEXT IN CODE
+]]
+
+if not game:IsLoaded() then game.Loaded:Wait() end
+
+local Player = game:GetService("Players").LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+local RunService = game:GetService("RunService")
+
+-- [ Configuration ]
+_G.AutoSteal = false
+_G.Mode = "Left" 
+_G.AntiRagdoll = true
+_G.GrabRange = 20
+
+-- [ POSITIONS ]
+local Pos = {
+    LeftEnemy = Vector3.new(-48, 8, 0),
+    RightEnemy = Vector3.new(48, 8, 0),
+    LeftHome = Vector3.new(-15, 8, 0),
+    RightHome = Vector3.new(15, 8, 0)
+}
+
+-- [ READY INDICATOR UI ]
+local IndicatorGui = Instance.new("ScreenGui", CoreGui)
+IndicatorGui.Name = "HorzenIndicator"
+
+local ReadyBar = Instance.new("Frame", IndicatorGui)
+ReadyBar.Size = UDim2.new(0, 350, 0, 40)
+ReadyBar.Position = UDim2.new(0.5, -175, 1, -100)
+ReadyBar.BackgroundColor3 = Color3.fromRGB(10, 5, 10)
+ReadyBar.BorderSizePixel = 0
+ReadyBar.Visible = false
+
+local Corner = Instance.new("UICorner", ReadyBar)
+Corner.CornerRadius = UDim.new(0, 8)
+local Stroke = Instance.new("UIStroke", ReadyBar)
+Stroke.Color = Color3.fromRGB(80, 0, 20)
+Stroke.Thickness = 2
+
+local ReadyText = Instance.new("TextLabel", ReadyBar)
+ReadyText.Size = UDim2.new(0.4, 0, 1, 0)
+ReadyText.Position = UDim2.new(0.05, 0, 0, 0)
+ReadyText.Text = "READY"
+ReadyText.TextColor3 = Color3.new(1, 1, 1)
+ReadyText.Font = Enum.Font.GothamBold
+ReadyText.TextSize = 18
+ReadyText.TextXAlignment = Enum.TextXAlignment.Left
+ReadyText.BackgroundTransparency = 1
+
+local DistVal = Instance.new("TextLabel", ReadyBar)
+DistVal.Size = UDim2.new(0, 45, 0, 25)
+DistVal.Position = UDim2.new(0.7, 0, 0.5, -12)
+DistVal.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+DistVal.Text = "20"
+DistVal.TextColor3 = Color3.fromRGB(255, 50, 50)
+DistVal.Font = Enum.Font.GothamBold
+Instance.new("UICorner", DistVal)
+
+local SpeedVal = Instance.new("TextLabel", ReadyBar)
+SpeedVal.Size = UDim2.new(0, 45, 0, 25)
+SpeedVal.Position = UDim2.new(0.85, 0, 0.5, -12)
+SpeedVal.BackgroundColor3 = Color3.fromRGB(20, 15, 25)
+SpeedVal.Text = "0.01"
+SpeedVal.TextColor3 = Color3.fromRGB(255, 50, 50)
+SpeedVal.Font = Enum.Font.GothamBold
+Instance.new("UICorner", SpeedVal)
+
+-- [ EXTERNAL HUD BUTTONS ]
+local SideButtons = Instance.new("Frame", IndicatorGui)
+SideButtons.Size = UDim2.new(0, 130, 0, 200)
+SideButtons.Position = UDim2.new(1, -140, 0.5, -100)
+SideButtons.BackgroundTransparency = 1
+
+local Layout = Instance.new("UIGridLayout", SideButtons)
+Layout.CellSize = UDim2.new(0, 60, 0, 60)
+
+local function CreateBtn(name, callback)
+    local b = Instance.new("TextButton", SideButtons)
+    b.Text = name
+    b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    b.TextColor3 = Color3.new(1,1,1)
+    b.Font = Enum.Font.GothamBold
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 10)
+    local act = false
+    b.MouseButton1Click:Connect(function()
+        act = not act
+        b.BackgroundColor3 = act and Color3.fromRGB(200, 0, 50) or Color3.fromRGB(30, 30, 30)
+        callback(act)
+    end)
+end
+
+CreateBtn("Auto L", function(v) _G.AutoSteal = v _G.Mode = "Left" end)
+CreateBtn("Auto R", function(v) _G.AutoSteal = v _G.Mode = "Right" end)
+
+-- [ CORE ENGINE ]
+
+local function CheckProximity()
+    local targetFound = false
+    for _, v in pairs(workspace:GetDescendants()) do
+        if v:IsA("ProximityPrompt") then
+            local part = v.Parent:IsA("BasePart") and v.Parent or v.Parent.Parent
+            if part and part:IsA("BasePart") then
+                local dist = (Player.Character.HumanoidRootPart.Position - part.Position).Magnitude
+                if dist <= _G.GrabRange then
+                    DistVal.Text = tostring(math.floor(dist))
+                    targetFound = true
+                    break
+                end
+            end
+        end
+    end
+    ReadyBar.Visible = targetFound
+end
+
+RunService.RenderStepped:Connect(function()
+    CheckProximity()
+end)
+
+task.spawn(function()
+    while task.wait(0.01) do
+        if _G.AutoSteal then
+            pcall(function()
+                local char = Player.Character
+                local root = char.HumanoidRootPart
+                local isCarrying = char:FindFirstChild("Brainrot") or char:FindFirstChildOfClass("Tool")
+                
+                if not isCarrying then
+                    root.CFrame = (_G.Mode == "Left") and CFrame.new(Pos.LeftEnemy) or CFrame.new(Pos.RightEnemy)
+                    for _, v in pairs(workspace:GetDescendants()) do
+                        if v:IsA("ProximityPrompt") then
+                            v.HoldDuration = 0
+                            fireproximityprompt(v)
+                        end
+                    end
+                else
+                    root.CFrame = (_G.Mode == "Left") and CFrame.new(Pos.LeftHome) or CFrame.new(Pos.RightHome)
+                end
+            end)
+        end
+    end
+end)
+
+-- [ ANTI-RAGDOLL HANDLER ]
+RunService.Stepped:Connect(function()
+    if _G.AntiRagdoll and Player.Character and Player.Character:FindFirstChild("Humanoid") then
+        local hum = Player.Character.Humanoid
+        if hum:GetState() == Enum.HumanoidStateType.Ragdoll or hum:GetState() == Enum.HumanoidStateType.FallingDown then
+            hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+        end
+    end
+end)
